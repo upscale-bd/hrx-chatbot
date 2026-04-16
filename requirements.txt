@@ -1,0 +1,33 @@
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# Database
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.9
+
+# Config / validation
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+
+# Celery / Redis
+celery==5.4.0
+redis==5.2.0
+
+# Google Gemini / LangChain
+langchain-google-genai==2.0.4
+google-generativeai==0.8.3
+
+# HTTP client
+requests==2.32.3
+
+# Report generation
+pandas==2.2.3
+openpyxl==3.1.5
+
+# Consul
+python-consul==1.1.0
+
+# MinIO (optional)
+minio==7.2.10
