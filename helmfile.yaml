@@ -1,0 +1,15 @@
+helmDefaults:
+  createNamespace: true
+  wait: false
+  timeout: 300
+
+environments:
+  staging: {}
+  production: {}
+
+releases:
+  - name: "{{ requiredEnv "RELEASE" }}"          # e.g. pmx-backend
+    namespace: "{{ .Environment.Name }}"         # staging or production
+    chart: kubernetes/helm/{{ requiredEnv "RELEASE" }}
+    values:
+      - kubernetes/helm/{{ requiredEnv "RELEASE" }}/{{ .Environment.Name }}-values.yaml

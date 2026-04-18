@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pmx-backend.fullname" . }}
+  labels:
+    {{- include "pmx-backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "pmx-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pmx-backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: pmx-backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          {{- if or .Values.environment (hasKey . "dummy") }}
+          envFrom:
+            {{- if .Values.environment }}
+            - configMapRef:
+                name: "{{ include "pmx-backend.fullname" . }}-env"
+            {{- end }}
+            - secretRef:
+                name: "pmx-backend-env"   # fixed & simple
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: mohsin30/hrx-chatbot
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: docker-hub
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+  hosts:
+    - host: staging-chatbot-api.pmxbd.com
+      paths:
+        - "/"
+  tls:
+    - secretName: staging-chatbot-api-tls
+      hosts:
+        - staging-chatbot-api.pmxbd.com
+
+# non-sensitive env only
+environment:
+  NODE_ENV: staging
+  PORT: "5000"
+  S3_BUCKET_ENDPOINT: "sgp1.digitaloceanspaces.com"
+  S3_BUCKET_NAME: "production-activation"
+  JWT_EXPIRES_IN: "90d"
+  JWT_COOKIE_EXPIRES_IN: "90"
+  EMAIL_USERNAME: "username"
+  EMAIL_HOST: "smtp.mailtrap.io"
+  EMAIL_PORT: "25"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
