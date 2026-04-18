@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "pmx-backend.fullname" . }}
+  name: {{ include "hrx-chatbot.fullname" . }}
   labels:
-    {{- include "pmx-backend.labels" . | nindent 4 }}
+    {{- include "hrx-chatbot.labels" . | nindent 4 }}
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
@@ -26,7 +26,7 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: {{ include "pmx-backend.fullname" $ }}
+                name: {{ include "hrx-chatbot.fullname" $ }}
                 port:
                   number: {{ $.Values.service.port }}
         {{- end }}

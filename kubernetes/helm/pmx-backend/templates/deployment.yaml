@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "pmx-backend.fullname" . }}
+  name: {{ include "hrx-chatbot.fullname" . }}
   labels:
-    {{- include "pmx-backend.labels" . | nindent 4 }}
+    {{- include "hrx-chatbot.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "pmx-backend.selectorLabels" . | nindent 6 }}
+      {{- include "hrx-chatbot.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "pmx-backend.selectorLabels" . | nindent 8 }}
+        {{- include "hrx-chatbot.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: pmx-backend
+        - name: hrx-chatbot
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -30,10 +30,10 @@ spec:
           envFrom:
             {{- if .Values.environment }}
             - configMapRef:
-                name: "{{ include "pmx-backend.fullname" . }}-env"
+                name: "{{ include "hrx-chatbot.fullname" . }}-env"
             {{- end }}
             - secretRef:
-                name: "pmx-backend-env"   # fixed & simple
+                name: "hrx-chatbot-env"   # fixed & simple
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

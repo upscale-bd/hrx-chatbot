@@ -1,12 +1,12 @@
-{{- define "pmx-backend.name" -}}pmx-backend{{- end -}}
-{{- define "pmx-backend.fullname" -}}
-{{- printf "%s-%s" .Release.Name (include "pmx-backend.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- define "hrx-chatbot.name" -}}hrx-chatbot{{- end -}}
+{{- define "hrx-chatbot.fullname" -}}
+{{- printf "%s-%s" .Release.Name (include "hrx-chatbot.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-{{- define "pmx-backend.labels" -}}
-app.kubernetes.io/name: {{ include "pmx-backend.name" . }}
+{{- define "hrx-chatbot.labels" -}}
+app.kubernetes.io/name: {{ include "hrx-chatbot.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
-{{- define "pmx-backend.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "pmx-backend.name" . }}
+{{- define "hrx-chatbot.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "hrx-chatbot.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}

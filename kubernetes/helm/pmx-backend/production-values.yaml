@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: mohsin30/pmx-backend
+  repository: mohsin30/hrx-chatbot
   tag: "latest"
   pullPolicy: IfNotPresent
 

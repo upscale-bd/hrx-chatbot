@@ -8,7 +8,7 @@ environments:
   production: {}
 
 releases:
-  - name: "{{ requiredEnv "RELEASE" }}"          # e.g. pmx-backend
+  - name: "{{ requiredEnv "RELEASE" }}"          # e.g. hrx-chatbot
     namespace: "{{ .Environment.Name }}"         # staging or production
     chart: kubernetes/helm/{{ requiredEnv "RELEASE" }}
     values:

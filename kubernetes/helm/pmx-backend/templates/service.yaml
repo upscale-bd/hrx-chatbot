@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "pmx-backend.fullname" . }}
+  name: {{ include "hrx-chatbot.fullname" . }}
   labels:
-    {{- include "pmx-backend.labels" . | nindent 4 }}
+    {{- include "hrx-chatbot.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    {{- include "pmx-backend.selectorLabels" . | nindent 4 }}
+    {{- include "hrx-chatbot.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.service.port }}
