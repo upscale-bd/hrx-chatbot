@@ -16,4 +16,4 @@ COPY . /app
 EXPOSE 3001
 
 # Entrypoint: app.serve:app  (no main.py needed)
-CMD ["uvicorn", "app.serve:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.serve:app", "--host", "0.0.0.0", "--port", "3001"]

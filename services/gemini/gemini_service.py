@@ -177,7 +177,7 @@ class GeminiService:
         prompt = prompt_service.get_dataset_context_analysis_prompt(
             job_title=job_title,
             job_description=job_description,
-            dataset_content=dataset_content[:8000]  # Limit to avoid token limits
+            dataset_content=dataset_content[:3001]  # Limit to avoid token limits
         )
         
         try:
