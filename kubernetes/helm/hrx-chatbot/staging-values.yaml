@@ -33,7 +33,7 @@ ingress:
 # non-sensitive env only
 environment:
   NODE_ENV: staging
-  PORT: "5000"
+  PORT: "3001"
   S3_BUCKET_ENDPOINT: "sgp1.digitaloceanspaces.com"
   S3_BUCKET_NAME: "production-activation"
   JWT_EXPIRES_IN: "90d"

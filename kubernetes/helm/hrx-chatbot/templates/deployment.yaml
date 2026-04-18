@@ -24,7 +24,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 5000
+              containerPort: 3001
               protocol: TCP
           {{- if or .Values.environment (hasKey . "dummy") }}
           envFrom:
