@@ -1,2 +1,52 @@
 # Ignore environment variable files
 .env
+.env.local
+.env.*.local
+
+# Kubernetes - Sensitive files
+kubernetes/secrets/
+kubernetes/**/*-secret*.yaml
+kubernetes/**/*-env*.yml
+
+# Helm - Local overrides
+helmfile.lock
+helm-values.*.yaml
+
+# Kubernetes - Generated files
+*.kubeconfig
+kubeconfig
+
+# Docker Compose - Local overrides
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+
+# Celery
+celerybeat-schedule
+
+# Node/npm (if used)
+node_modules/
+npm-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
