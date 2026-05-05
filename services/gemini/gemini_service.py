@@ -192,3 +192,90 @@ class GeminiService:
                 "candidate_profile_enhancements": [],
                 "search_strategies": ["Standard search approach"]
             }
+
+    def transcribe_audio(self, audio_file_path: str) -> str:
+        """Transcribe audio file using Gemini's audio capabilities.
+        
+        Args:
+            audio_file_path: Path to the audio file
+            
+        Returns:
+            Transcribed text from the audio
+        """
+        import google.generativeai as genai
+        
+        try:
+            self.logger.info(f"[gemini] Starting audio transcription for: {audio_file_path}")
+            
+            # Upload the file to Gemini Files API
+            audio_file = genai.upload_file(audio_file_path)
+            self.logger.info(f"[gemini] Audio file uploaded: {audio_file.uri}")
+            
+            # Create a model instance for transcription
+            model = genai.GenerativeModel("gemini-3.1-pro-preview")
+            
+            # Send transcription request
+            response = model.generate_content([
+                "Please transcribe the following audio file. Return only the transcribed text without any additional commentary:",
+                audio_file
+            ])
+            
+            # Delete the uploaded file
+            genai.delete_file(audio_file.name)
+            self.logger.info(f"[gemini] Audio file deleted: {audio_file.name}")
+            
+            transcribed_text = response.text.strip()
+            self.logger.info(f"[gemini] Transcription completed successfully")
+            
+            return transcribed_text
+        except Exception as e:
+            self.logger.error(f"[gemini] Audio transcription failed: {e}")
+            raise
+
+    def calculate_similarity_percentage(self, text1: str, text2: str) -> float:
+        """Calculate similarity percentage between two texts using Gemini AI.
+        
+        Args:
+            text1: Original script
+            text2: Transcribed text
+            
+        Returns:
+            Similarity percentage (0-100)
+        """
+        import json
+        
+        try:
+            self.logger.info("[gemini] Calculating similarity percentage")
+            
+            prompt = f"""Compare the following two texts and provide a similarity percentage (0-100).
+            
+Original Script:
+{text1}
+
+Transcribed Text:
+{text2}
+
+Respond with ONLY a JSON object in this format:
+{{"similarity_percentage": <number between 0 and 100>, "notes": "<brief explanation>"}}
+
+Do not include any markdown formatting or code blocks. Just the JSON object."""
+            
+            response = self.generate_response_sync(prompt)
+            
+            # Parse the JSON response
+            clean_response = response.strip()
+            # Remove markdown code fences if present
+            if clean_response.startswith("```"):
+                clean_response = clean_response.split("```")[1]
+                if clean_response.startswith("json"):
+                    clean_response = clean_response[4:]
+            
+            result = json.loads(clean_response.strip())
+            similarity = float(result.get("similarity_percentage", 0))
+            
+            self.logger.info(f"[gemini] Similarity calculated: {similarity}%")
+            return similarity
+            
+        except Exception as e:
+            self.logger.error(f"[gemini] Similarity calculation failed: {e}")
+            raise

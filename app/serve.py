@@ -15,6 +15,8 @@ from app.chatbot.handler.chat_handler import router as chat_router
 from app.mcp.handler.tool_handler import router as tool_router
 from app.report.handler.report_handler import router as report_router
 from app.auth.handler.auth_handler import router as auth_router
+from app.audio_comparison.handler.audio_comparison_handler import router as audio_comparison_router
+from app.admin.handler.admin_script_handler import router as admin_script_router
 
 
 logger = get_logger("serve")
@@ -130,6 +132,10 @@ def create_app() -> FastAPI:
     app.include_router(report_router)
     logger.info("[serve] Registering authentication router...")
     app.include_router(auth_router)
+    logger.info("[serve] Registering audio comparison router...")
+    app.include_router(audio_comparison_router)
+    logger.info("[serve] Registering admin script router...")
+    app.include_router(admin_script_router)
     logger.info("[serve] All routers registered ✅")
 
     @app.get("/health")

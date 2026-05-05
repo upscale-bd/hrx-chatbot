@@ -34,8 +34,8 @@ def init_db() -> bool:
     try:
         init_engine()
         logger.info("[database] Importing model modules to register metadata")
-        from models import tool_registry, chat_history, report_log  # noqa: F401
-        logger.info("[database] Models registered: tool_registry, chat_history, report_log")
+        from models import tool_registry, chat_history, report_log, audio_comparison, admin_script  # noqa: F401
+        logger.info("[database] Models registered: tool_registry, chat_history, report_log, audio_comparison, admin_script")
         logger.info("[database] Running create_all on metadata")
         Base.metadata.create_all(bind=engine)
         logger.info("[database] All tables created/verified successfully")
