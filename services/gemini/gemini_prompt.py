@@ -182,24 +182,47 @@ def build_audio_transcription_prompt() -> str:
 
 
 def build_similarity_calculation_prompt(text1: str, text2: str) -> str:
-    """Prompt for calculating similarity between two texts.
-    
-    Args:
-        text1: Original script
-        text2: Transcribed text
-        
-    Returns:
-        Formatted prompt for Gemini
-    """
-    return f"""Compare the following two texts and provide a similarity percentage (0-100).
-            
-Original Script:
+    return f"""
+You are a semantic similarity evaluator.
+
+Your job is to compare TWO sentences and measure how close they are in MEANING.
+
+IMPORTANT:
+You must NOT rely on word matching. Focus only on the actual meaning.
+
+Think like this:
+- Do both sentences express the same idea?
+- If one is paraphrased, does it still mean the same thing?
+- Are they describing the same event, action, or intent?
+
+Scoring rules:
+100 = Exact same meaning (even if words differ)
+80-99 = Same meaning with minor differences
+50-79 = Partially similar meaning
+20-49 = Weak relation / different ideas but some overlap
+0-19 = Completely different meaning
+
+Examples of correct understanding:
+- "I am going to school" vs "I go to school" → high similarity
+- Bangla + English same meaning should also be treated as high similarity
+
+Texts:
+
+Sentence 1:
 {text1}
 
-Transcribed Text:
+Sentence 2:
 {text2}
 
-Respond with ONLY a JSON object in this format:
-{{"similarity_percentage": <number between 0 and 100>, "notes": "<brief explanation>"}}
+Return ONLY JSON:
 
-Do not include any markdown formatting or code blocks. Just the JSON object."""
+{{
+  "similarity_percentage": <0-100>,
+  "notes": "<Explain briefly in Bangla or English why this score was given>"
+}}
+
+Rules:
+- No word-based matching
+- Focus ONLY on meaning
+- Output must be valid JSON only
+"""
