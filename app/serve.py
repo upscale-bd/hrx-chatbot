@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.cors import CORSMiddleware
 
 from common.logger import get_logger
 from common.response import api_response
@@ -32,6 +33,16 @@ def create_app() -> FastAPI:
         version="1.0.0",
     )
     logger.info("[serve] FastAPI instance created")
+    
+    # Add CORS middleware to allow all origins
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allow all origins
+        allow_credentials=True,
+        allow_methods=["*"],  # Allow all HTTP methods
+        allow_headers=["*"],  # Allow all headers
+    )
+    logger.info("[serve] CORS middleware configured - allowing all origins")
     
     # Custom OpenAPI schema with Bearer token security
     def custom_openapi():

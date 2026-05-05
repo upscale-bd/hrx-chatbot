@@ -203,6 +203,7 @@ class GeminiService:
             Transcribed text from the audio
         """
         import google.generativeai as genai
+        from services.gemini.gemini_prompt import build_audio_transcription_prompt
         
         try:
             self.logger.info(f"[gemini] Starting audio transcription for: {audio_file_path}")
@@ -214,9 +215,12 @@ class GeminiService:
             # Create a model instance for transcription
             model = genai.GenerativeModel("gemini-3.1-pro-preview")
             
+            # Get transcription prompt
+            prompt = build_audio_transcription_prompt()
+            
             # Send transcription request
             response = model.generate_content([
-                "Please transcribe the following audio file. Return only the transcribed text without any additional commentary:",
+                prompt,
                 audio_file
             ])
             
@@ -243,22 +247,12 @@ class GeminiService:
             Similarity percentage (0-100)
         """
         import json
+        from services.gemini.gemini_prompt import build_similarity_calculation_prompt
         
         try:
             self.logger.info("[gemini] Calculating similarity percentage")
             
-            prompt = f"""Compare the following two texts and provide a similarity percentage (0-100).
-            
-Original Script:
-{text1}
-
-Transcribed Text:
-{text2}
-
-Respond with ONLY a JSON object in this format:
-{{"similarity_percentage": <number between 0 and 100>, "notes": "<brief explanation>"}}
-
-Do not include any markdown formatting or code blocks. Just the JSON object."""
+            prompt = build_similarity_calculation_prompt(text1, text2)
             
             response = self.generate_response_sync(prompt)
             

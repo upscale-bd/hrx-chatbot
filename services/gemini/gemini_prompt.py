@@ -172,3 +172,34 @@ def build_out_of_scope_prompt(user_message: str) -> str:
         "Keep it to 2-3 sentences maximum.\n"
         "Response:"
     )
+
+
+def build_audio_transcription_prompt() -> str:
+    """Prompt for audio transcription task."""
+    return (
+        "Please transcribe the following audio file. Return only the transcribed text without any additional commentary."
+    )
+
+
+def build_similarity_calculation_prompt(text1: str, text2: str) -> str:
+    """Prompt for calculating similarity between two texts.
+    
+    Args:
+        text1: Original script
+        text2: Transcribed text
+        
+    Returns:
+        Formatted prompt for Gemini
+    """
+    return f"""Compare the following two texts and provide a similarity percentage (0-100).
+            
+Original Script:
+{text1}
+
+Transcribed Text:
+{text2}
+
+Respond with ONLY a JSON object in this format:
+{{"similarity_percentage": <number between 0 and 100>, "notes": "<brief explanation>"}}
+
+Do not include any markdown formatting or code blocks. Just the JSON object."""
