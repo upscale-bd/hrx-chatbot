@@ -5,7 +5,8 @@ from services.gemini.gemini_service import GeminiService
 from app.audio_comparison.repository.audio_comparison_repository import AudioComparisonRepository
 from app.admin.repository.admin_script_repository import AdminScriptRepository
 from app.audio_comparison.dto.audio_comparison_dto import (
-    AudioComparisonRequest, AudioComparisonResponse, AudioResultResponse, AudioStatusResponse
+    AudioComparisonRequest, AudioComparisonResponse, AudioResultResponse, AudioStatusResponse,
+    UserCreateResponse, UserResponse
 )
 from common.logger import get_logger
 
@@ -14,7 +15,7 @@ logger = get_logger("audio_comparison_usecase")
 
 
 class AudioComparisonUsecase:
-    """Usecase for audio transcription and comparison with admin script."""
+    """Usecase for audio transcription, comparison with admin script, and user management."""
     
     def __init__(self, db: Session):
         self.db = db
@@ -22,12 +23,128 @@ class AudioComparisonUsecase:
         self.repository = AudioComparisonRepository(db)
         self.admin_repository = AdminScriptRepository(db)
     
-    def process_audio_upload(self, user_name: str, admin_name: str, audio_file_content: bytes, 
+    # ==================== USER MANAGEMENT ====================
+    
+    def create_user(self, user_name: str) -> UserCreateResponse:
+        """Create a new user.
+        
+        Args:
+            user_name: Name of the user
+            
+        Returns:
+            UserCreateResponse with user ID
+        """
+        try:
+            logger.info(f"[audio_comparison_usecase] Creating user: {user_name}")
+            
+            user = self.repository.create_user(user_name)
+            
+            logger.info(f"[audio_comparison_usecase] User created successfully with ID: {user.id}")
+            
+            return UserCreateResponse(
+                success=True,
+                user_id=user.id,
+                user_name=user.user_name,
+                message=f"User '{user_name}' created successfully",
+                error=None
+            )
+        
+        except Exception as e:
+            logger.error(f"[audio_comparison_usecase] Error creating user: {e}")
+            return UserCreateResponse(
+                success=False,
+                user_id="",
+                user_name=user_name,
+                message="Error creating user",
+                error=str(e)
+            )
+    
+    def get_user(self, user_id: str) -> dict:
+        """Get user by ID.
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Dictionary with user information
+        """
+        try:
+            logger.info(f"[audio_comparison_usecase] Fetching user: {user_id}")
+            
+            user = self.repository.get_user_by_id(user_id)
+            
+            if not user:
+                logger.warning(f"[audio_comparison_usecase] User not found: {user_id}")
+                return {
+                    "success": False,
+                    "message": f"User not found: {user_id}",
+                    "error": "user_not_found"
+                }
+            
+            logger.info(f"[audio_comparison_usecase] User fetched successfully: {user.user_name}")
+            
+            return {
+                "success": True,
+                "user_id": user.id,
+                "user_name": user.user_name,
+                "created_at": user.created_at
+            }
+        
+        except Exception as e:
+            logger.error(f"[audio_comparison_usecase] Error fetching user: {e}")
+            return {
+                "success": False,
+                "message": f"Error fetching user",
+                "error": str(e)
+            }
+    
+    def get_all_users(self) -> dict:
+        """Get all users.
+        
+        Returns:
+            Dictionary with list of all users
+        """
+        try:
+            logger.info("[audio_comparison_usecase] Fetching all users")
+            
+            users = self.repository.get_all_users()
+            
+            users_list = [
+                {
+                    "user_id": user.id,
+                    "user_name": user.user_name,
+                    "created_at": user.created_at
+                }
+                for user in users
+            ]
+            
+            logger.info(f"[audio_comparison_usecase] Fetched {len(users_list)} users")
+            
+            return {
+                "success": True,
+                "total_users": len(users_list),
+                "users": users_list,
+                "error": None
+            }
+        
+        except Exception as e:
+            logger.error(f"[audio_comparison_usecase] Error fetching all users: {e}")
+            return {
+                "success": False,
+                "total_users": 0,
+                "users": [],
+                "error": str(e)
+            }
+    
+    # ==================== AUDIO COMPARISON ====================
+    
+    def process_audio_upload(self, user_id: str, user_name: str, admin_name: str, audio_file_content: bytes, 
                             audio_file_name: str = "audio.wav") -> AudioComparisonResponse:
         """Process audio file: transcribe and compare with admin script.
         
         Args:
-            user_name: User identifier
+            user_id: Unique user identifier (UUID or custom ID)
+            user_name: User display name
             admin_name: Admin who owns the script
             audio_file_content: Binary content of the audio file
             audio_file_name: Name of the audio file
@@ -36,7 +153,7 @@ class AudioComparisonUsecase:
             AudioComparisonResponse with upload confirmation and similarity
         """
         try:
-            logger.info(f"[audio_comparison_usecase] Starting audio processing | User: {user_name} | Admin: {admin_name}")
+            logger.info(f"[audio_comparison_usecase] Starting audio processing | User ID: {user_id} | User Name: {user_name} | Admin: {admin_name}")
             
             # Check if processing is enabled
             if not self.repository.is_processing_enabled():
@@ -85,6 +202,7 @@ class AudioComparisonUsecase:
                 # Save to database
                 logger.info("[audio_comparison_usecase] Saving to database")
                 comparison = self.repository.save_comparison(
+                    user_id=user_id,
                     user_name=user_name,
                     admin_name=admin_name,
                     transcribed_text=transcribed_text,
@@ -230,3 +348,81 @@ class AudioComparisonUsecase:
         except Exception as e:
             logger.error(f"[audio_comparison_usecase] Error setting processing status: {e}")
             return {"success": False, "message": "Error updating status", "error": str(e)}
+
+    def get_all_users_stats(self) -> dict:
+        """Get all users with their audio statistics.
+        
+        Returns a dictionary with:
+        - success: bool
+        - total_users: int
+        - users: list of user stats dicts containing:
+          - user_id: str
+          - user_name: str
+          - submission_count: int
+          - last_score: float
+          - average_score: float
+          - last_submission_time: datetime
+        - error: str (if any)
+        """
+        try:
+            logger.info("[audio_comparison_usecase] Fetching all users' statistics from stats table")
+            
+            stats = self.repository.get_all_user_stats_from_db()
+            
+            logger.info(f"[audio_comparison_usecase] Retrieved stats for {len(stats)} users")
+            
+            return {
+                "success": True,
+                "total_users": len(stats),
+                "users": stats,
+                "error": None
+            }
+        
+        except Exception as e:
+            logger.error(f"[audio_comparison_usecase] Error fetching all user stats: {e}")
+            return {
+                "success": False,
+                "total_users": 0,
+                "users": [],
+                "error": str(e)
+            }
+
+    def get_user_stats(self, user_id: str) -> dict:
+        """Get audio statistics for a specific user by user_id from stats table.
+        
+        Args:
+            user_id: Unique user identifier
+            
+        Returns:
+            Dictionary with user's statistics
+        """
+        try:
+            logger.info(f"[audio_comparison_usecase] Fetching statistics for user_id: {user_id} from stats table")
+            
+            stats = self.repository.get_user_stats_from_db(user_id)
+            
+            if not stats:
+                logger.warning(f"[audio_comparison_usecase] No stats found for user_id: {user_id}")
+                return {
+                    "success": False,
+                    "message": f"No data found for user_id: {user_id}",
+                    "error": "user_not_found"
+                }
+            
+            return {
+                "success": True,
+                "user_id": stats["user_id"],
+                "user_name": stats["user_name"],
+                "submission_count": stats["submission_count"],
+                "last_score": stats["last_score"],
+                "average_score": stats["average_score"],
+                "last_submission_time": stats["last_submission_time"]
+            }
+        
+        except Exception as e:
+            logger.error(f"[audio_comparison_usecase] Error fetching user stats for user_id {user_id}: {e}")
+            return {
+                "success": False,
+                "message": f"Error fetching stats for user_id {user_id}",
+                "error": str(e)
+            }

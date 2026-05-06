@@ -143,7 +143,7 @@ def create_app() -> FastAPI:
     app.include_router(report_router)
     logger.info("[serve] Registering authentication router...")
     app.include_router(auth_router)
-    logger.info("[serve] Registering audio comparison router...")
+    logger.info("[serve] Registering audio comparison router (includes user management)...")
     app.include_router(audio_comparison_router)
     logger.info("[serve] Registering admin script router...")
     app.include_router(admin_script_router)

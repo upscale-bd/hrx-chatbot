@@ -1,4 +1,7 @@
 from typing import Dict, Optional
+import concurrent.futures
+import time
+import traceback
 from langchain_google_genai import GoogleGenerativeAI
 import google.generativeai as genai
 from services.gemini.gemini_types import GeminiModel
@@ -205,36 +208,85 @@ class GeminiService:
         import google.generativeai as genai
         from services.gemini.gemini_prompt import build_audio_transcription_prompt
         
+        audio_file = None
         try:
             self.logger.info(f"[gemini] Starting audio transcription for: {audio_file_path}")
-            
+
             # Upload the file to Gemini Files API
             audio_file = genai.upload_file(audio_file_path)
             self.logger.info(f"[gemini] Audio file uploaded: {audio_file.uri}")
-            
-            # Create a model instance for transcription
-            model = genai.GenerativeModel("gemini-3.1-pro-preview")
-            
+
             # Get transcription prompt
             prompt = build_audio_transcription_prompt()
-            
-            # Send transcription request
-            response = model.generate_content([
-                prompt,
-                audio_file
-            ])
-            
-            # Delete the uploaded file
-            genai.delete_file(audio_file.name)
-            self.logger.info(f"[gemini] Audio file deleted: {audio_file.name}")
-            
-            transcribed_text = response.text.strip()
-            self.logger.info(f"[gemini] Transcription completed successfully")
-            
-            return transcribed_text
+
+            max_retries = self.max_retries or 1
+            retry_delay = self.retry_delay or 2
+            timeout_seconds = self.timeout or 30
+
+            # Fallback model list: try faster/cheaper first, then stronger
+            model_candidates = [
+                "gemini-2.5-flash",
+                "gemini-1.5-pro",
+                "gemini-3.1-pro-preview",
+            ]
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                last_error = None
+                for model_name in model_candidates:
+                    self.logger.info(f"[gemini] Using transcription model: {model_name}")
+                    model = genai.GenerativeModel(model_name)
+
+                    def generate():
+                        return model.generate_content([prompt, audio_file])
+
+                    for attempt in range(1, max_retries + 1):
+                        attempt_start = time.time()
+                        self.logger.info(f"[gemini] Transcription attempt {attempt}/{max_retries} | model={model_name}")
+                        future = executor.submit(generate)
+                        try:
+                            response = future.result(timeout=timeout_seconds)
+                            transcribed_text = (response.text or "").strip()
+                            duration = time.time() - attempt_start
+                            self.logger.info(
+                                f"[gemini] Transcription completed successfully | model={model_name} | attempt={attempt} | duration={duration:.2f}s | chars={len(transcribed_text)}"
+                            )
+                            return transcribed_text
+                        except concurrent.futures.TimeoutError:
+                            duration = time.time() - attempt_start
+                            last_error = TimeoutError("Gemini transcription timeout")
+                            self.logger.warning(
+                                f"[gemini] Transcription timeout | model={model_name} | attempt={attempt} | duration={duration:.2f}s"
+                            )
+                        except Exception as e:
+                            duration = time.time() - attempt_start
+                            last_error = e
+                            self.logger.warning(
+                                f"[gemini] Transcription failed | model={model_name} | attempt={attempt} | duration={duration:.2f}s | error={e}"
+                            )
+                            self.logger.debug(traceback.format_exc())
+
+                        if attempt < max_retries:
+                            backoff = retry_delay * (2 ** (attempt - 1))
+                            self.logger.info(f"[gemini] Retrying transcription in {backoff}s | model={model_name}")
+                            time.sleep(backoff)
+
+                    self.logger.warning(f"[gemini] Model failed for transcription: {model_name}")
+
+                if last_error:
+                    raise last_error
+
+            raise RuntimeError("Gemini transcription failed without response")
         except Exception as e:
             self.logger.error(f"[gemini] Audio transcription failed: {e}")
+            self.logger.debug(traceback.format_exc())
             raise
+        finally:
+            if audio_file is not None:
+                try:
+                    genai.delete_file(audio_file.name)
+                    self.logger.info(f"[gemini] Audio file deleted: {audio_file.name}")
+                except Exception:
+                    self.logger.warning("[gemini] Failed to delete uploaded file")
 
     def calculate_similarity_percentage(self, text1: str, text2: str) -> float:
         """Calculate similarity percentage between two texts using Gemini AI.

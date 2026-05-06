@@ -3,6 +3,40 @@ from typing import Optional
 from datetime import datetime
 
 
+# ==================== USER DTOs ====================
+
+class UserCreateRequest(BaseModel):
+    """Request to create a new user."""
+    user_name: str
+
+
+class UserCreateResponse(BaseModel):
+    """Response after user creation."""
+    success: bool = True
+    user_id: str
+    user_name: str
+    message: str
+    error: Optional[str] = None
+
+
+class UserResponse(BaseModel):
+    """Response with user information."""
+    user_id: str
+    user_name: str
+    created_at: datetime
+    error: Optional[str] = None
+
+
+class AllUsersResponse(BaseModel):
+    """Response with all users."""
+    success: bool = True
+    total_users: int
+    users: list[UserResponse]
+    error: Optional[str] = None
+
+
+# ==================== AUDIO COMPARISON DTOs ====================
+
 class AudioComparisonRequest(BaseModel):
     """Request to upload audio for transcription and comparison."""
     user_name: str
@@ -37,4 +71,23 @@ class AudioStatusResponse(BaseModel):
     transcribed_text: Optional[str] = None
     created_at: Optional[datetime] = None
     message: Optional[str] = None
+    error: Optional[str] = None
+
+
+class UserAudioStatsResponse(BaseModel):
+    """Response with user's audio statistics."""
+    user_id: str
+    user_name: str
+    submission_count: int
+    last_score: Optional[float] = None
+    average_score: float
+    last_submission_time: Optional[datetime] = None
+    error: Optional[str] = None
+
+
+class AllUsersStatsResponse(BaseModel):
+    """Response with all users' audio statistics."""
+    success: bool = True
+    total_users: int
+    users: list[UserAudioStatsResponse]
     error: Optional[str] = None
