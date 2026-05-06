@@ -32,3 +32,54 @@ class AdminScriptGetResponse(BaseModel):
 class AdminScriptUpdateRequest(BaseModel):
     """Request to update script."""
     script: str
+
+
+class AdminCreateRequest(BaseModel):
+    """Request to create an admin user."""
+    name: str
+    email: str
+    password: str
+
+
+class AdminCreateResponse(BaseModel):
+    """Response after admin user creation."""
+    success: bool = True
+    id: str
+    name: str
+    email: str
+    message: str
+    error: Optional[str] = None
+
+
+class AdminLoginRequest(BaseModel):
+    """Request to login an admin user."""
+    email: str
+    password: str
+
+
+class AdminLoginResponse(BaseModel):
+    """Response after admin login."""
+    success: bool = True
+    token: str
+    expires_at: Optional[datetime] = None
+    message: str
+    error: Optional[str] = None
+
+
+class UserAudioStatsResponse(BaseModel):
+    """Response with user's audio statistics."""
+    user_id: str
+    user_name: str
+    submission_count: int
+    last_score: Optional[float] = None
+    average_score: float
+    last_submission_time: Optional[datetime] = None
+    error: Optional[str] = None
+
+
+class AllUsersStatsResponse(BaseModel):
+    """Response with all users' audio statistics."""
+    success: bool = True
+    total_users: int
+    users: list[UserAudioStatsResponse]
+    error: Optional[str] = None

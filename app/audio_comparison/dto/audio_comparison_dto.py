@@ -74,20 +74,3 @@ class AudioStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
-class UserAudioStatsResponse(BaseModel):
-    """Response with user's audio statistics."""
-    user_id: str
-    user_name: str
-    submission_count: int
-    last_score: Optional[float] = None
-    average_score: float
-    last_submission_time: Optional[datetime] = None
-    error: Optional[str] = None
-
-
-class AllUsersStatsResponse(BaseModel):
-    """Response with all users' audio statistics."""
-    success: bool = True
-    total_users: int
-    users: list[UserAudioStatsResponse]
-    error: Optional[str] = None

@@ -167,29 +167,6 @@ class AudioComparisonRepository:
             logger.error(f"[audio_comparison_repository] Error fetching comparisons: {e}")
             raise
 
-    def is_processing_enabled(self) -> bool:
-        """Check if project processing is enabled."""
-        try:
-            # Check if any comparison has is_enabled=True; if none exist, default to True
-            result = self.db.query(AudioComparison).filter(
-                AudioComparison.is_enabled == True
-            ).first()
-            return result is not None if self.db.query(AudioComparison).count() > 0 else True
-        except Exception as e:
-            logger.error(f"[audio_comparison_repository] Error checking if processing enabled: {e}")
-            return True  # Default to enabled if error
-
-    def set_processing_enabled(self, enabled: bool) -> None:
-        """Enable or disable all audio processing."""
-        try:
-            self.db.query(AudioComparison).update({"is_enabled": enabled})
-            self.db.commit()
-            logger.info(f"[audio_comparison_repository] Set processing_enabled to {enabled}")
-        except Exception as e:
-            logger.error(f"[audio_comparison_repository] Error setting processing enabled: {e}")
-            self.db.rollback()
-            raise
-
     def get_all_user_stats(self) -> list:
         """Get statistics for all users - count, average score, last score, last submission time."""
         try:
@@ -309,62 +286,4 @@ class AudioComparisonRepository:
             logger.error(f"[audio_comparison_repository] Error updating user stats for {user_id}: {e}")
             self.db.rollback()
             # Don't raise - stats update should not fail the main submission
-
-    def get_user_stats_from_db(self, user_id: str) -> dict:
-        """Get user statistics from stats table.
-        
-        Args:
-            user_id: Unique user identifier
-            
-        Returns:
-            Dictionary with user stats or empty dict if not found
-        """
-        try:
-            stats = self.db.query(UserAudioStats).filter(
-                UserAudioStats.user_id == user_id
-            ).first()
-            
-            if not stats:
-                logger.warning(f"[audio_comparison_repository] Stats not found for user_id: {user_id}")
-                return {}
-            
-            return {
-                "user_id": stats.user_id,
-                "user_name": stats.user_name,
-                "submission_count": stats.submission_count,
-                "average_score": stats.average_score,
-                "last_score": stats.last_score,
-                "last_submission_time": stats.last_submission_time
-            }
-        except Exception as e:
-            logger.error(f"[audio_comparison_repository] Error fetching stats for user_id {user_id}: {e}")
-            return {}
-
-    def get_all_user_stats_from_db(self) -> list:
-        """Get all user statistics from stats table (fast, no calculation needed).
-        
-        Returns:
-            List of user stats dictionaries
-        """
-        try:
-            all_stats = self.db.query(UserAudioStats).order_by(
-                UserAudioStats.updated_at.desc()
-            ).all()
-            
-            stats_list = []
-            for stat in all_stats:
-                stats_list.append({
-                    "user_id": stat.user_id,
-                    "user_name": stat.user_name,
-                    "submission_count": stat.submission_count,
-                    "average_score": stat.average_score,
-                    "last_score": stat.last_score,
-                    "last_submission_time": stat.last_submission_time
-                })
-            
-            logger.info(f"[audio_comparison_repository] Fetched stats for {len(stats_list)} users from stats table")
-            return stats_list
-        except Exception as e:
-            logger.error(f"[audio_comparison_repository] Error fetching all user stats: {e}")
-            return []
 

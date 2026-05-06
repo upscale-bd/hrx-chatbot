@@ -156,7 +156,7 @@ class AudioComparisonUsecase:
             logger.info(f"[audio_comparison_usecase] Starting audio processing | User ID: {user_id} | User Name: {user_name} | Admin: {admin_name}")
             
             # Check if processing is enabled
-            if not self.repository.is_processing_enabled():
+            if not self.admin_repository.is_processing_enabled():
                 logger.warning("[audio_comparison_usecase] Processing is disabled")
                 return AudioComparisonResponse(
                     success=False,
@@ -323,106 +323,3 @@ class AudioComparisonUsecase:
                 error=str(e)
             )
 
-    def get_processing_status(self) -> dict:
-        """Get current processing enabled status."""
-        try:
-            enabled = self.repository.is_processing_enabled()
-            return {
-                "success": True,
-                "processing_enabled": enabled,
-                "message": "Processing is on" if enabled else "Off is on"
-            }
-        except Exception as e:
-            logger.error(f"[audio_comparison_usecase] Error getting processing status: {e}")
-            return {"success": False, "message": "Error getting status", "error": str(e)}
-
-    def set_processing_status(self, enabled: bool) -> dict:
-        """Set processing enabled or disabled."""
-        try:
-            self.repository.set_processing_enabled(enabled)
-            return {
-                "success": True,
-                "processing_enabled": enabled,
-                "message": "Processing enabled" if enabled else "Processing disabled"
-            }
-        except Exception as e:
-            logger.error(f"[audio_comparison_usecase] Error setting processing status: {e}")
-            return {"success": False, "message": "Error updating status", "error": str(e)}
-
-    def get_all_users_stats(self) -> dict:
-        """Get all users with their audio statistics.
-        
-        Returns a dictionary with:
-        - success: bool
-        - total_users: int
-        - users: list of user stats dicts containing:
-          - user_id: str
-          - user_name: str
-          - submission_count: int
-          - last_score: float
-          - average_score: float
-          - last_submission_time: datetime
-        - error: str (if any)
-        """
-        try:
-            logger.info("[audio_comparison_usecase] Fetching all users' statistics from stats table")
-            
-            stats = self.repository.get_all_user_stats_from_db()
-            
-            logger.info(f"[audio_comparison_usecase] Retrieved stats for {len(stats)} users")
-            
-            return {
-                "success": True,
-                "total_users": len(stats),
-                "users": stats,
-                "error": None
-            }
-        
-        except Exception as e:
-            logger.error(f"[audio_comparison_usecase] Error fetching all user stats: {e}")
-            return {
-                "success": False,
-                "total_users": 0,
-                "users": [],
-                "error": str(e)
-            }
-
-    def get_user_stats(self, user_id: str) -> dict:
-        """Get audio statistics for a specific user by user_id from stats table.
-        
-        Args:
-            user_id: Unique user identifier
-            
-        Returns:
-            Dictionary with user's statistics
-        """
-        try:
-            logger.info(f"[audio_comparison_usecase] Fetching statistics for user_id: {user_id} from stats table")
-            
-            stats = self.repository.get_user_stats_from_db(user_id)
-            
-            if not stats:
-                logger.warning(f"[audio_comparison_usecase] No stats found for user_id: {user_id}")
-                return {
-                    "success": False,
-                    "message": f"No data found for user_id: {user_id}",
-                    "error": "user_not_found"
-                }
-            
-            return {
-                "success": True,
-                "user_id": stats["user_id"],
-                "user_name": stats["user_name"],
-                "submission_count": stats["submission_count"],
-                "last_score": stats["last_score"],
-                "average_score": stats["average_score"],
-                "last_submission_time": stats["last_submission_time"]
-            }
-        
-        except Exception as e:
-            logger.error(f"[audio_comparison_usecase] Error fetching user stats for user_id {user_id}: {e}")
-            return {
-                "success": False,
-                "message": f"Error fetching stats for user_id {user_id}",
-                "error": str(e)
-            }

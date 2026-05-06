@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from app.audio_comparison.dto.audio_comparison_dto import (
     AudioComparisonRequest, AudioComparisonResponse, AudioResultResponse, AudioStatusResponse,
-    UserAudioStatsResponse, AllUsersStatsResponse, UserCreateRequest, UserCreateResponse, UserResponse, AllUsersResponse
+    UserCreateRequest, UserCreateResponse, UserResponse, AllUsersResponse
 )
 from app.audio_comparison.usecase.audio_comparison_usecase import AudioComparisonUsecase
 from infrastructure.database import get_db
@@ -139,129 +139,6 @@ def get_transcription_status(
             created_at=None,
             error=str(e)
         )
-
-@router.get("/processing")
-def check_processing_status(db: Session = Depends(get_db)):
-    """Check if processing is enabled or disabled."""
-    logger.info("[audio_handler] GET /audio/processing received")
-    try:
-        usecase = AudioComparisonUsecase(db)
-        response = usecase.get_processing_status()
-        return response
-    except Exception as e:
-        logger.error(f"[audio_handler] Error checking processing status: {e}")
-        return {"success": False, "message": "Error checking status", "error": str(e)}
-
-
-@router.put("/processing/{status}")
-def set_processing_status(status: str, db: Session = Depends(get_db)):
-    """Enable or disable audio processing.
-    
-    - **status**: 'on' to enable or 'off' to disable
-    """
-    logger.info(f"[audio_handler] PUT /audio/processing/{status} received")
-    try:
-        enabled = status.lower() == "on"
-        usecase = AudioComparisonUsecase(db)
-        response = usecase.set_processing_status(enabled)
-        return response
-    except Exception as e:
-        logger.error(f"[audio_handler] Error setting processing status: {e}")
-        return {"success": False, "message": "Error updating status", "error": str(e)}
-
-
-@router.get("/stats/all", response_model=AllUsersStatsResponse)
-def get_all_users_stats(db: Session = Depends(get_db)):
-    """Get statistics for all users.
-    
-    Returns a list of all users with their:
-    - Total submission count
-    - Average score across all submissions
-    - Last submission score
-    - Last submission time
-    """
-    logger.info("[audio_handler] GET /audio/stats/all received")
-    try:
-        usecase = AudioComparisonUsecase(db)
-        result = usecase.get_all_users_stats()
-        
-        if result["success"]:
-            logger.info(f"[audio_handler] Retrieved stats for {result['total_users']} users")
-            return AllUsersStatsResponse(
-                success=True,
-                total_users=result["total_users"],
-                users=[UserAudioStatsResponse(**user) for user in result["users"]],
-                error=None
-            )
-        else:
-            logger.error(f"[audio_handler] Error: {result.get('error')}")
-            return AllUsersStatsResponse(
-                success=False,
-                total_users=0,
-                users=[],
-                error=result.get("error")
-            )
-    except Exception as e:
-        logger.error(f"[audio_handler] Error getting all users stats: {e}")
-        return AllUsersStatsResponse(
-            success=False,
-            total_users=0,
-            users=[],
-            error=str(e)
-        )
-
-
-@router.get("/stats/user/{user_id}", response_model=UserAudioStatsResponse)
-def get_user_stats(user_id: str, db: Session = Depends(get_db)):
-    """Get audio statistics for a specific user by user_id.
-    
-    - **user_id**: Unique user identifier
-    
-    Returns:
-    - Total submission count
-    - Average score across all submissions
-    - Last submission score
-    - Last submission time
-    """
-    logger.info(f"[audio_handler] GET /audio/stats/user/{user_id} received")
-    try:
-        usecase = AudioComparisonUsecase(db)
-        result = usecase.get_user_stats(user_id)
-        
-        if result["success"]:
-            logger.info(f"[audio_handler] Retrieved stats for user_id: {user_id}")
-            return UserAudioStatsResponse(
-                user_id=result["user_id"],
-                user_name=result["user_name"],
-                submission_count=result["submission_count"],
-                last_score=result["last_score"],
-                average_score=result["average_score"],
-                last_submission_time=result["last_submission_time"],
-                error=None
-            )
-        else:
-            logger.warning(f"[audio_handler] No stats found for user_id: {user_id}")
-            return UserAudioStatsResponse(
-                user_id=user_id,
-                user_name="Unknown",
-                submission_count=0,
-                last_score=None,
-                average_score=0.0,
-                last_submission_time=None,
-                error=result.get("error")
-            )
-    except Exception as e:
-        logger.error(f"[audio_handler] Error getting user stats: {e}")
-        return UserAudioStatsResponse(
-            user_id=user_id,
-            user_name="Unknown",
-            submission_count=0,
-            last_score=None,
-            average_score=0.0,
-            last_submission_time=None,
-            error=str(e)
-        )
-
 
 # ==================== USER MANAGEMENT ENDPOINTS ====================
 
